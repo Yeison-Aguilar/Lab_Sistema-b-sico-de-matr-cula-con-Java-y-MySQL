@@ -14,7 +14,7 @@ public class CursoDAO {
         List<Curso> lista = new ArrayList<>();
         String sql = """
             SELECT id_curso, codigo, nombre, creditos
-            FROM curso
+            FROM lab_curso
             ORDER BY nombre
         """;
 

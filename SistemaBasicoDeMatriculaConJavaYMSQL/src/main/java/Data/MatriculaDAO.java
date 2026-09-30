@@ -14,7 +14,7 @@ public class MatriculaDAO {
         List<Matricula> lista = new ArrayList<>();
         String sql = """
             SELECT id_matricula, id_estudiante, id_curso, ciclo, anio, nota_final
-            FROM matricula
+            FROM lab_matricula
             ORDER BY anio, ciclo
         """;
 
@@ -49,9 +49,9 @@ public class MatriculaDAO {
                    m.ciclo,
                    m.anio,
                    m.nota_final
-            FROM matricula m
-            JOIN estudiante e ON m.id_estudiante = e.id_estudiante
-            JOIN curso cu ON m.id_curso = cu.id_curso
+            FROM lab_matricula m
+            JOIN lab_estudiante e ON m.id_estudiante = e.id_estudiante
+            JOIN lab_curso cu ON m.id_curso = cu.id_curso
             ORDER BY m.anio, m.ciclo, estudiante
         """;
 
@@ -76,8 +76,8 @@ public class MatriculaDAO {
     public void cantidadCursosPorEstudiante() {
         String sql = """
             SELECT e.nombre, e.apellido, COUNT(m.id_matricula) AS total_cursos
-            FROM estudiante e
-            LEFT JOIN matricula m ON e.id_estudiante = m.id_estudiante
+            FROM lab_estudiante e
+            LEFT JOIN lab_matricula m ON e.id_estudiante = m.id_estudiante
             GROUP BY e.id_estudiante, e.nombre, e.apellido
             ORDER BY total_cursos DESC, e.apellido, e.nombre
         """;

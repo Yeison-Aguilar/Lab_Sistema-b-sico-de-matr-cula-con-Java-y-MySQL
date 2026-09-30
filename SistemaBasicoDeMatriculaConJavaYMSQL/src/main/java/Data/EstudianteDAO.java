@@ -14,7 +14,7 @@ public class EstudianteDAO {
         List<Estudiante> lista = new ArrayList<>();
         String sql = """
             SELECT e.id_estudiante, e.cedula, e.nombre, e.apellido, e.correo, e.id_carrera
-            FROM estudiante e
+            FROM lab_estudiante e
             ORDER BY e.apellido, e.nombre
         """;
 
@@ -45,8 +45,8 @@ public class EstudianteDAO {
         List<Estudiante> lista = new ArrayList<>();
         String sql = """
             SELECT e.id_estudiante, e.cedula, e.nombre, e.apellido, e.correo, e.id_carrera, c.nombre AS nombre_carrera
-            FROM estudiante e
-            JOIN carrera c ON e.id_carrera = c.id_carrera
+            FROM lab_estudiante e
+            JOIN lab_carrera c ON e.id_carrera = c.id_carrera
             ORDER BY e.apellido, e.nombre
         """;
 
