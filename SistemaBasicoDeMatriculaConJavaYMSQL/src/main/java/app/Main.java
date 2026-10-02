@@ -14,10 +14,18 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import model.Estudiante;
+import data.PersistenciaException;
+import javafx.scene.control.Alert;
+import data.PersistenciaException;
+import javafx.scene.control.Alert;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
+import logic.EstudianteService;
+import logic.ValidacionException;
 
 public class Main extends Application {
 
-private final EstudianteDAO estudianteDAO = new EstudianteDAO();
+private final EstudianteService servicio = new EstudianteService(new EstudianteDAO());
 
 @Override
 public void start(Stage stage) {
@@ -32,7 +40,7 @@ public void start(Stage stage) {
     subtitulo.setStyle("-fx-font-size: 18px;");
 
     TableView<Estudiante> tabla = new TableView<>();
-
+    
     TableColumn<Estudiante, Integer> columnaId =
             new TableColumn<>("ID");
 
@@ -84,6 +92,26 @@ public void start(Stage stage) {
             columnaCarrera
     );
 
+    TextField txtCedula = new TextField();
+    TextField txtNombre = new TextField();
+    TextField txtApellido = new TextField();
+    TextField txtCorreo = new TextField();
+    TextField txtCarrera = new TextField();
+
+    GridPane formulario = new GridPane();
+    formulario.setHgap(10);
+    formulario.setVgap(8);
+    formulario.addRow(0, new Label("Cédula:"), txtCedula);
+    formulario.addRow(1, new Label("Nombre:"), txtNombre);
+    formulario.addRow(2, new Label("Apellido:"), txtApellido);
+    formulario.addRow(3, new Label("Correo:"), txtCorreo);
+    formulario.addRow(4, new Label("ID Carrera:"), txtCarrera);
+
+    Button botonGuardar = new Button("Guardar");
+    botonGuardar.setOnAction(event ->
+        guardar(txtCedula, txtNombre, txtApellido, txtCorreo, txtCarrera, tabla));
+    
+    
     Button botonActualizar = new Button("Actualizar");
 
     botonActualizar.setOnAction(event -> {
@@ -97,9 +125,7 @@ public void start(Stage stage) {
     });
 
     HBox botones = new HBox(10);
-    botones.getChildren().addAll(
-            botonActualizar,
-            botonSalir
+    botones.getChildren().addAll(botonGuardar, botonActualizar, botonSalir
     );
 
     VBox encabezado = new VBox(5);
@@ -110,10 +136,7 @@ public void start(Stage stage) {
 
     VBox contenido = new VBox(15);
     contenido.setStyle("-fx-padding: 20;");
-    contenido.getChildren().addAll(
-            encabezado,
-            tabla,
-            botones
+    contenido.getChildren().addAll(encabezado, tabla, formulario, botones
     );
 
     BorderPane root = new BorderPane();
@@ -129,14 +152,46 @@ public void start(Stage stage) {
 }
 
 private void cargarEstudiantes(TableView<Estudiante> tabla) {
+    try {
+        tabla.setItems(
+                FXCollections.observableArrayList(servicio.listar())
+        );
+    } catch (PersistenciaException ex) {
+        new Alert(Alert.AlertType.ERROR, ex.getMessage()).showAndWait();
+    }
+}
+private void guardar(TextField cedula, TextField nombre, TextField apellido,
+                     TextField correo, TextField carrera, TableView<Estudiante> tabla) {
+    int idCarrera;
+    try {
+        idCarrera = Integer.parseInt(carrera.getText().trim());
+    } catch (NumberFormatException ex) {
+        mostrar(Alert.AlertType.WARNING, "El ID de carrera debe ser un número entero");
+        return;
+    }
 
-    tabla.setItems(
-            FXCollections.observableArrayList(
-                    estudianteDAO.listarEstudiantes()
-            )
-    );
+    Estudiante est = new Estudiante(cedula.getText().trim(), nombre.getText().trim(),
+            apellido.getText().trim(), correo.getText().trim(), idCarrera);
+
+    try {
+        servicio.registrar(est);
+        mostrar(Alert.AlertType.INFORMATION, "Estudiante registrado");
+        cargarEstudiantes(tabla);
+        cedula.clear();
+        nombre.clear();
+        apellido.clear();
+        correo.clear();
+        carrera.clear();
+    } catch (ValidacionException ex) {
+        mostrar(Alert.AlertType.WARNING, ex.getMessage());
+    } catch (PersistenciaException ex) {
+        mostrar(Alert.AlertType.ERROR, ex.getMessage());
+    }
 }
 
+private void mostrar(Alert.AlertType tipo, String mensaje) {
+    new Alert(tipo, mensaje).showAndWait();
+}
 public static void main(String[] args) {
     launch(args);
 }

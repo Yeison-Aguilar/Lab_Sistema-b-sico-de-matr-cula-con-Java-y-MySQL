@@ -8,8 +8,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EstudianteDAO {
+public class EstudianteDAO implements EstudianteRepository {
 
+    @Override
     public List<Estudiante> listarEstudiantes() {
         List<Estudiante> lista = new ArrayList<>();
         String sql = """
@@ -23,54 +24,59 @@ public class EstudianteDAO {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                Estudiante est = new Estudiante(
+                lista.add(new Estudiante(
                         rs.getInt("id_estudiante"),
                         rs.getString("cedula"),
                         rs.getString("nombre"),
                         rs.getString("apellido"),
                         rs.getString("correo"),
                         rs.getInt("id_carrera")
-                );
-                lista.add(est);
+                ));
             }
 
         } catch (SQLException e) {
-            System.out.println("Error al listar estudiantes: " + e.getMessage());
+            throw new PersistenciaException("No se pudo leer la lista de estudiantes", e);
         }
 
         return lista;
     }
 
-    public List<Estudiante> listarEstudiantesConCarrera() {
-        List<Estudiante> lista = new ArrayList<>();
+    @Override
+    public void insertar(Estudiante est) {
         String sql = """
-            SELECT e.id_estudiante, e.cedula, e.nombre, e.apellido, e.correo, e.id_carrera, c.nombre AS nombre_carrera
-            FROM lab_estudiante e
-            JOIN lab_carrera c ON e.id_carrera = c.id_carrera
-            ORDER BY e.apellido, e.nombre
+            INSERT INTO lab_estudiante (cedula, nombre, apellido, correo, id_carrera)
+            VALUES (?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = ConexionBD.conectar();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            while (rs.next()) {
-                Estudiante est = new Estudiante(
-                        rs.getInt("id_estudiante"),
-                        rs.getString("cedula"),
-                        rs.getString("nombre"),
-                        rs.getString("apellido"),
-                        rs.getString("correo"),
-                        rs.getInt("id_carrera")
-                );
-                lista.add(est);
-                System.out.println(est.getNombre() + " " + est.getApellido() + " - " + rs.getString("nombre_carrera"));
+            ps.setString(1, est.getCedula());
+            ps.setString(2, est.getNombre());
+            ps.setString(3, est.getApellido());
+            ps.setString(4, est.getCorreo());
+            ps.setInt(5, est.getIdCarrera());
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new PersistenciaException("No se pudo guardar el estudiante", e);
+        }
+    }
+
+    @Override
+    public boolean existePorCedula(String cedula) {
+        String sql = "SELECT 1 FROM lab_estudiante WHERE cedula = ?";
+
+        try (Connection conn = ConexionBD.conectar();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, cedula);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
             }
 
         } catch (SQLException e) {
-            System.out.println("Error al listar estudiantes con carrera: " + e.getMessage());
+            throw new PersistenciaException("No se pudo consultar la cédula", e);
         }
-
-        return lista;
     }
 }
